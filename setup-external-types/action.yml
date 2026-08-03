@@ -1,10 +1,16 @@
-name: Set up external types checks
+name: Check external types
 
-description: Install the pinned Rust toolchain and tools used by cargo-check-external-types checks.
+description: Check library crates for external types in their public APIs.
 
 branding:
   icon: check-circle
   color: orange
+
+inputs:
+  all-features:
+    description: Pass --all-features to cargo-check-external-types.
+    required: false
+    default: "false"
 
 runs:
   using: composite
@@ -14,12 +20,24 @@ runs:
       with:
         toolchain: nightly-2026-03-20
 
-    - name: Install just
-      uses: taiki-e/install-action@6a1bd70eaac3c8bdf093356838d7ee09fda951cf # v2.85.5
-      with:
-        tool: just
-
     - name: Install cargo-check-external-types
       uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
       with:
         tool: cargo-check-external-types
+
+    - name: Check external types
+      shell: bash
+      env:
+        ALL_FEATURES: ${{ inputs['all-features'] }}
+      run: |
+        set -eEuo pipefail
+        cargo metadata --frozen --no-deps --format-version=1 \
+          | jq -r '.workspace_members as $members | .packages[] | select(.id as $id | $members | index($id)) | select(any(.targets[]; .kind | index("lib"))) | .manifest_path' \
+          | while read -r manifest_path; do
+              echo "Checking external types: ${manifest_path}"
+              args=(--manifest-path "${manifest_path}")
+              if [[ "${ALL_FEATURES}" == "true" ]]; then
+                args+=(--all-features)
+              fi
+              cargo check-external-types "${args[@]}"
+            done

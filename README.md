@@ -4,15 +4,15 @@ Reusable GitHub Actions for x52 projects.
 
 ## `setup-external-types`
 
-The `setup-external-types` action installs the pinned Rust nightly toolchain,
-`just`, and `cargo-check-external-types` for external-types checks:
+The `setup-external-types` action installs the pinned Rust nightly toolchain and
+`cargo-check-external-types`, then checks all library crates in the workspace:
 
 ```yaml
 - uses: x52dev/actions/setup-external-types@master
-
-- name: Check external types
-  run: just check-external-types
 ```
+
+Set `all-features: true` when the workspace check must enable every crate
+feature.
 
 The action owns the Rust toolchain version. Update it in
 [`setup-external-types/action.yml`](setup-external-types/action.yml) when the

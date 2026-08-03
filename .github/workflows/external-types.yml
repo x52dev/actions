@@ -16,17 +16,13 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          repository: robjtede/actix-web-lab
+          ref: main
           persist-credentials: false
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          repository: robjtede/actix-web-lab
-          ref: main
-          path: actix-web-lab
+          path: x52-actions
           persist-credentials: false
 
-      - uses: ./setup-external-types
-
-      - name: Check external types
-        working-directory: actix-web-lab
-        run: just check-external-types-all
+      - uses: ./x52-actions/setup-external-types
