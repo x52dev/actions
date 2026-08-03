@@ -1,4 +1,4 @@
-name: Check external types
+name: Full cargo check external types
 
 description: Check library crates for external types in their public APIs.
 

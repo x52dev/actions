@@ -25,4 +25,4 @@ jobs:
           path: x52-actions
           persist-credentials: false
 
-      - uses: ./x52-actions/setup-external-types
+      - uses: ./x52-actions/full-cargo-check-external-types
