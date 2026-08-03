@@ -1,0 +1,25 @@
+name: Set up external types checks
+
+description: Install the pinned Rust toolchain and tools used by cargo-check-external-types checks.
+
+branding:
+  icon: check-circle
+  color: orange
+
+runs:
+  using: composite
+  steps:
+    - name: Install Rust nightly
+      uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+      with:
+        toolchain: nightly-2026-03-20
+
+    - name: Install just
+      uses: taiki-e/install-action@6a1bd70eaac3c8bdf093356838d7ee09fda951cf # v2.85.5
+      with:
+        tool: just
+
+    - name: Install cargo-check-external-types
+      uses: taiki-e/cache-cargo-install-action@417450f3c33ee20393705369577571770643d4c7 # v3.0.7
+      with:
+        tool: cargo-check-external-types
