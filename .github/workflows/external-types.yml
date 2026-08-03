@@ -1,0 +1,32 @@
+name: External types
+
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check external types
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: robjtede/actix-web-lab
+          ref: main
+          path: actix-web-lab
+          persist-credentials: false
+
+      - uses: ./setup-external-types
+
+      - name: Check external types
+        working-directory: actix-web-lab
+        run: just check-external-types-all
