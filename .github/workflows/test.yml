@@ -20,9 +20,4 @@ jobs:
           ref: main
           persist-credentials: false
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          path: x52-actions
-          persist-credentials: false
-
-      - uses: ./x52-actions/cargo-workspace-check-external-types
+      - uses: $/cargo-workspace-check-external-types
