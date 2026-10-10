@@ -21,11 +21,19 @@ jobs:
             expected-result: success
           - workspace: fail
             expected-result: failure
+          - workspace: pass
+            expected-result: failure
+            invalid-manifest: true
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Make member manifest invalid
+        if: matrix.invalid-manifest == true
+        working-directory: check-workspace-lints-inherited/tests/${{ matrix.workspace }}
+        run: printf '\ninvalid TOML\n' >> member/Cargo.toml
 
       - uses: $/check-workspace-lints-inherited
         id: check

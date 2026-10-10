@@ -7,20 +7,30 @@ if ! awk '/^\[workspace\.lints(\.|])/{ found = 1 } END { exit found ? 0 : 1 }' C
     exit 1
 fi
 
+manifest_paths_file=$(mktemp)
+
+trap 'rm -f "$manifest_paths_file"' EXIT
+
+if ! cargo --frozen metadata --no-deps --format-version=1 \
+    | jq -r '.packages[] | select(.source == null) | .manifest_path' \
+    > "$manifest_paths_file"; then
+    echo "Failed to read Cargo metadata" >&2
+    exit 1
+fi
+
 exit_code=0
 
 while IFS= read -r manifest_path; do
     if ! awk '
-        /^\[/ { in_lints = ($0 == "[lints]") }
+        /^[[:space:]]*\[/ {
+            in_lints = ($0 ~ /^[[:space:]]*\[[[:space:]]*lints[[:space:]]*\][[:space:]]*(#.*)?$/)
+        }
         in_lints && /^[[:space:]]*workspace[[:space:]]*=[[:space:]]*true([[:space:]]*(#.*)?)?$/ { found = 1 }
         END { exit found ? 0 : 1 }
     ' "$manifest_path"; then
         printf 'Crate manifest does not inherit workspace lints: %s\n' "${manifest_path#"$PWD"/}" >&2
         exit_code=1
     fi
-done < <(
-    cargo --frozen metadata --no-deps --format-version=1 \
-        | jq -r '.packages[] | select(.source == null) | .manifest_path'
-)
+done < "$manifest_paths_file"
 
 exit "$exit_code"
