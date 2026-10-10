@@ -1,0 +1,14 @@
+[package]
+name = "workspace-lints-fail"
+version = "0.0.0"
+edition = "2021"
+
+[workspace]
+members = ["member"]
+resolver = "2"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[lints]
+workspace = true

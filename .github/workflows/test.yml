@@ -11,6 +11,37 @@ permissions:
   contents: read
 
 jobs:
+  check-workspace-lints-inherited:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - workspace: pass
+            expected-result: success
+          - workspace: fail
+            expected-result: failure
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: $/check-workspace-lints-inherited
+        id: check
+        continue-on-error: ${{ matrix.expected-result == 'failure' }}
+        with:
+          working-directory: check-workspace-lints-inherited/tests/${{ matrix.workspace }}
+
+      - name: Check result
+        env:
+          EXPECTED_RESULT: ${{ matrix.expected-result }}
+          ACTUAL_OUTCOME: ${{ steps.check.outcome }}
+          ACTUAL_RESULT: ${{ steps.check.outputs.result }}
+        run: |
+          test "$ACTUAL_OUTCOME" = "$EXPECTED_RESULT"
+          test "$ACTUAL_RESULT" = "$EXPECTED_RESULT"
+
   cargo-workspace-check-external-types:
     runs-on: ubuntu-latest
     steps:
