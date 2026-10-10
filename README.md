@@ -5,14 +5,16 @@ Reusable GitHub Actions for x52 projects.
 ## `check-workspace-lints`
 
 The `check-workspace-lints` action checks that each local crate inherits workspace
-lints or defines at least one local lint:
+lints:
 
 ```yaml
 - uses: x52dev/actions/check-workspace-lints@main
 ```
 
-Each crate must set `[lints] workspace = true` or define a nonempty lint table,
-such as `[lints.rust]` or `[lints.clippy]`. Empty or missing lint tables fail.
+Each crate must set `[lints] workspace = true`. Set `accept-lint-overrides: true`
+to also accept nonempty local lint tables, such as `[lints.rust]` or
+`[lints.clippy]`. This input defaults to `false`. Empty or missing lint tables
+fail in both modes.
 The runner must have Rust 1.85 or newer with Cargo installed. Cargo builds the
 checker on first use.
 

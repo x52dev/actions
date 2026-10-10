@@ -21,12 +21,7 @@ struct Package {
 }
 
 fn main() -> ExitCode {
-    let manifest_path = env::args_os()
-        .nth(1)
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("Cargo.toml"));
-
-    match check(&manifest_path) {
+    match run() {
         Ok(true) => ExitCode::SUCCESS,
         Ok(false) => ExitCode::FAILURE,
         Err(err) => {
@@ -37,7 +32,24 @@ fn main() -> ExitCode {
     }
 }
 
-fn check(manifest_path: &Path) -> Result<bool, Box<dyn Error>> {
+fn run() -> Result<bool, Box<dyn Error>> {
+    let mut args = env::args_os().skip(1);
+    let manifest_path = args
+        .next()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("Cargo.toml"));
+    let accept_lint_overrides = args
+        .next()
+        .unwrap_or_else(|| "false".into())
+        .to_str()
+        .ok_or("accept-lint-overrides must be true or false")?
+        .parse::<bool>()
+        .map_err(|_| "accept-lint-overrides must be true or false")?;
+
+    check(&manifest_path, accept_lint_overrides)
+}
+
+fn check(manifest_path: &Path, accept_lint_overrides: bool) -> Result<bool, Box<dyn Error>> {
     let output = Command::new("cargo")
         .args([
             "metadata",
@@ -73,10 +85,11 @@ fn check(manifest_path: &Path) -> Result<bool, Box<dyn Error>> {
             .and_then(toml::Value::as_table)
             .is_some_and(|lints| {
                 lints.get("workspace").and_then(toml::Value::as_bool) == Some(true)
-                    || lints.iter().any(|(tool, value)| {
-                        tool != "workspace"
-                            && value.as_table().is_some_and(|table| !table.is_empty())
-                    })
+                    || accept_lint_overrides
+                        && lints.iter().any(|(tool, value)| {
+                            tool != "workspace"
+                                && value.as_table().is_some_and(|table| !table.is_empty())
+                        })
             });
 
         if !configured {
@@ -85,10 +98,13 @@ fn check(manifest_path: &Path) -> Result<bool, Box<dyn Error>> {
                 .strip_prefix(&metadata.workspace_root)
                 .unwrap_or(&package.manifest_path);
 
-            eprintln!(
-                "Crate manifest must inherit workspace lints or define local lints: {}",
-                path.display()
-            );
+            let requirement = if accept_lint_overrides {
+                "inherit workspace lints or define local lints"
+            } else {
+                "inherit workspace lints"
+            };
+
+            eprintln!("Crate manifest must {requirement}: {}", path.display());
 
             passed = false;
         }

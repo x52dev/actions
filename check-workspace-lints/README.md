@@ -1,28 +1,39 @@
 # Check Workspace Lints
 
-This action checks that each local crate in a Rust workspace has a lint
-configuration. A crate can inherit the workspace lints:
+This action checks that each local crate in a Rust workspace inherits the
+workspace lints:
 
 ```toml
 [lints]
 workspace = true
 ```
 
-Or it can define at least one local lint:
+The `accept-lint-overrides` input defaults to `false`. Set it to `true` to also
+accept crates that define at least one local lint:
+
+```yaml
+- uses: x52dev/actions/check-workspace-lints@main
+  with:
+    accept-lint-overrides: true
+```
+
+For example, a crate can define its own lint set when overrides are enabled:
 
 ```toml
 [lints.rust]
 unsafe_code = "forbid"
 ```
 
-Empty or missing lint tables fail. The check accepts all TOML forms that Cargo
-accepts, including inline tables, dotted keys, quoted keys, and comments.
+Empty or missing lint tables fail in both modes. The check accepts all TOML forms
+that Cargo accepts, including inline tables, dotted keys, quoted keys, and
+comments.
 
 Cargo does not let a crate combine workspace lint inheritance with local lint
 overrides. A crate that needs different lints must define its full local lint
-set. This action checks that a configuration exists; it does not compare local
-lints with workspace lints. The workspace root needs `[workspace.lints]` only
-when a crate inherits it. Virtual workspaces are supported.
+set. When overrides are enabled, this action checks that a local configuration
+exists; it does not compare local lints with workspace lints. The workspace root
+needs `[workspace.lints]` only when a crate inherits it. Virtual workspaces are
+supported.
 
 The runner must have Rust 1.85 or newer with Cargo installed. Cargo builds the
 Rust checker on first use and reuses the build on later calls. The checker's

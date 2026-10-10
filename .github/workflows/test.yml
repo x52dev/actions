@@ -27,6 +27,21 @@ jobs:
           - workspace: fail
             expected-result: failure
             empty-lints: true
+            accept-lint-overrides: "true"
+          - workspace: pass
+            expected-result: failure
+            local-lints: true
+            accept-lint-overrides: "false"
+          - workspace: pass
+            expected-result: success
+            local-lints: true
+            accept-lint-overrides: "true"
+          - workspace: pass
+            expected-result: success
+            accept-lint-overrides: "true"
+          - workspace: fail
+            expected-result: failure
+            accept-lint-overrides: "true"
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -43,11 +58,26 @@ jobs:
         working-directory: check-workspace-lints/tests/${{ matrix.workspace }}
         run: printf '\n[lints.rust]\n' >> member/Cargo.toml
 
+      - name: Configure local member lints
+        if: matrix.local-lints == true
+        working-directory: check-workspace-lints/tests/${{ matrix.workspace }}
+        run: |
+          cat > member/Cargo.toml <<'TOML'
+          [package]
+          name = "workspace-lints-pass-member"
+          version = "0.0.0"
+          edition = "2021"
+
+          [lints.rust]
+          unsafe_code = "allow"
+          TOML
+
       - uses: $/check-workspace-lints
         id: check
         continue-on-error: ${{ matrix.expected-result == 'failure' }}
         with:
           working-directory: check-workspace-lints/tests/${{ matrix.workspace }}
+          accept-lint-overrides: ${{ matrix.accept-lint-overrides || 'false' }}
 
       - name: Check result
         env:

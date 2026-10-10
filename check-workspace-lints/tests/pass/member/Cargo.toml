@@ -3,5 +3,5 @@ name = "workspace-lints-pass-member"
 version = "0.0.0"
 edition = "2021"
 
-[lints.rust]
-unsafe_code = "allow"
+[lints]
+workspace = true

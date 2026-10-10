@@ -1,10 +1,15 @@
 name: Check Workspace Lints
-description: Checks that local Rust crates inherit workspace lints or define local lints.
+description: Checks that local Rust crates inherit workspace lints, with optional local lint overrides.
 
 inputs:
   working-directory:
     description: Directory containing the workspace Cargo.toml.
     default: "."
+    required: false
+
+  accept-lint-overrides:
+    description: Accept nonempty local lint sets instead of requiring workspace lint inheritance.
+    default: "false"
     required: false
 
 outputs:
@@ -19,4 +24,6 @@ runs:
       id: check
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: cargo run --quiet --locked --manifest-path "${GITHUB_ACTION_PATH}/Cargo.toml" -- "$PWD/Cargo.toml"
+      env:
+        ACCEPT_LINT_OVERRIDES: ${{ inputs.accept-lint-overrides }}
+      run: cargo run --quiet --locked --manifest-path "${GITHUB_ACTION_PATH}/Cargo.toml" -- "$PWD/Cargo.toml" "$ACCEPT_LINT_OVERRIDES"

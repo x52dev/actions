@@ -29,11 +29,21 @@ fn fixture(name: &str) -> TempDir {
 }
 
 fn run(directory: &Path) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_check-workspace-lints"))
+    run_with_input(directory, None)
+}
+
+fn run_with_input(directory: &Path, accept_lint_overrides: Option<&str>) -> Output {
+    let mut command = Command::new(env!("CARGO_BIN_EXE_check-workspace-lints"));
+
+    command
         .current_dir(directory)
-        .arg(directory.join("Cargo.toml"))
-        .output()
-        .unwrap()
+        .arg(directory.join("Cargo.toml"));
+
+    if let Some(value) = accept_lint_overrides {
+        command.arg(value);
+    }
+
+    command.output().unwrap()
 }
 
 fn set_member_lints(directory: &Path, lints: &str) {
@@ -45,9 +55,24 @@ fn set_member_lints(directory: &Path, lints: &str) {
 }
 
 #[test]
+fn rejects_local_lints_by_default() {
+    let directory = fixture("pass");
+
+    set_member_lints(directory.path(), "[lints.rust]\nunsafe_code = 'allow'");
+
+    let output = run(directory.path());
+
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("must inherit workspace lints:"));
+}
+
+#[test]
 fn accepts_inheritance_and_a_local_lint_set_in_one_workspace() {
     let directory = fixture("pass");
-    let output = run(directory.path());
+
+    set_member_lints(directory.path(), "[lints.rust]\nunsafe_code = 'allow'");
+
+    let output = run_with_input(directory.path(), Some("true"));
 
     assert!(
         output.status.success(),
@@ -65,7 +90,7 @@ fn accepts_inline_local_lints_with_a_level_and_priority() {
         "lints = { rust = { unsafe_code = { level = 'allow', priority = 1 } } }",
     );
 
-    let output = run(directory.path());
+    let output = run_with_input(directory.path(), Some("true"));
 
     assert!(
         output.status.success(),
@@ -80,7 +105,7 @@ fn accepts_quoted_dotted_local_lint_keys() {
 
     set_member_lints(directory.path(), "'lints'.'clippy'.'dbg_macro' = 'deny'");
 
-    let output = run(directory.path());
+    let output = run_with_input(directory.path(), Some("true"));
 
     assert!(
         output.status.success(),
@@ -136,7 +161,9 @@ fn accepts_local_lints_without_workspace_lints() {
     )
     .unwrap();
 
-    let output = run(directory.path());
+    set_member_lints(directory.path(), "[lints.rust]\nunsafe_code = 'allow'");
+
+    let output = run_with_input(directory.path(), Some("true"));
 
     assert!(
         output.status.success(),
@@ -160,7 +187,7 @@ fn rejects_an_empty_local_lint_table() {
 
     set_member_lints(directory.path(), "[lints.rust]");
 
-    let output = run(directory.path());
+    let output = run_with_input(directory.path(), Some("true"));
 
     assert!(!output.status.success());
 }
@@ -171,7 +198,7 @@ fn rejects_an_empty_inline_lint_table() {
 
     set_member_lints(directory.path(), "lints = {}");
 
-    let output = run(directory.path());
+    let output = run_with_input(directory.path(), Some("true"));
 
     assert!(!output.status.success());
 }
@@ -197,7 +224,7 @@ fn rejects_inheritance_with_local_overrides() {
         "[lints]\nworkspace = true\n\n[lints.rust]\nunsafe_code = 'allow'",
     );
 
-    let output = run(directory.path());
+    let output = run_with_input(directory.path(), Some("true"));
 
     assert!(!output.status.success());
 }
@@ -212,4 +239,59 @@ fn rejects_a_missing_workspace_manifest() {
 
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("Failed to read Cargo metadata"));
+}
+
+#[test]
+fn accepts_workspace_inheritance_by_default() {
+    let directory = fixture("pass");
+    let output = run(directory.path());
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+fn accepts_workspace_inheritance_with_overrides_enabled() {
+    let directory = fixture("pass");
+    let output = run_with_input(directory.path(), Some("true"));
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+fn rejects_local_lints_with_overrides_disabled() {
+    let directory = fixture("pass");
+
+    set_member_lints(directory.path(), "[lints.rust]\nunsafe_code = 'allow'");
+
+    let output = run_with_input(directory.path(), Some("false"));
+
+    assert!(!output.status.success());
+}
+
+#[test]
+fn rejects_missing_lints_with_overrides_enabled() {
+    let directory = fixture("fail");
+    let output = run_with_input(directory.path(), Some("true"));
+
+    assert!(!output.status.success());
+}
+
+#[test]
+fn rejects_an_invalid_input_value() {
+    let directory = fixture("pass");
+    let output = run_with_input(directory.path(), Some("yes"));
+
+    assert!(!output.status.success());
+    assert!(
+        String::from_utf8_lossy(&output.stderr)
+            .contains("accept-lint-overrides must be true or false")
+    );
 }
