@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  check-workspace-lints-inherited:
+  check-workspace-lints:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -24,6 +24,9 @@ jobs:
           - workspace: pass
             expected-result: failure
             invalid-manifest: true
+          - workspace: fail
+            expected-result: failure
+            empty-lints: true
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -32,14 +35,19 @@ jobs:
 
       - name: Make member manifest invalid
         if: matrix.invalid-manifest == true
-        working-directory: check-workspace-lints-inherited/tests/${{ matrix.workspace }}
+        working-directory: check-workspace-lints/tests/${{ matrix.workspace }}
         run: printf '\ninvalid TOML\n' >> member/Cargo.toml
 
-      - uses: $/check-workspace-lints-inherited
+      - name: Add empty member lint table
+        if: matrix.empty-lints == true
+        working-directory: check-workspace-lints/tests/${{ matrix.workspace }}
+        run: printf '\n[lints.rust]\n' >> member/Cargo.toml
+
+      - uses: $/check-workspace-lints
         id: check
         continue-on-error: ${{ matrix.expected-result == 'failure' }}
         with:
-          working-directory: check-workspace-lints-inherited/tests/${{ matrix.workspace }}
+          working-directory: check-workspace-lints/tests/${{ matrix.workspace }}
 
       - name: Check result
         env:

@@ -10,5 +10,5 @@ resolver = "2"
 [workspace.lints.rust]
 unsafe_code = "forbid"
 
-[lints]
+[lints] # Inherit shared workspace lints.
 workspace = true

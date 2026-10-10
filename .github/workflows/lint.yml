@@ -10,6 +10,28 @@ permissions:
   contents: read
 
 jobs:
+  workspace-lints-checker:
+    name: Workspace Lints Checker
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: check-workspace-lints
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      - name: Check Rust code
+        run: cargo clippy --all-targets --locked -- -D warnings
+
+      - name: Test lint configurations
+        run: cargo test --locked
+
   zizmor:
     name: GitHub Actions Security
     runs-on: ubuntu-latest

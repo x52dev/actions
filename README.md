@@ -2,20 +2,22 @@
 
 Reusable GitHub Actions for x52 projects.
 
-## `check-workspace-lints-inherited`
+## `check-workspace-lints`
 
-The `check-workspace-lints-inherited` action checks that each local crate inherits
-lints from the workspace manifest:
+The `check-workspace-lints` action checks that each local crate inherits workspace
+lints or defines at least one local lint:
 
 ```yaml
-- uses: x52dev/actions/check-workspace-lints-inherited@main
+- uses: x52dev/actions/check-workspace-lints@main
 ```
 
-The workspace root must define `[workspace.lints]`, and each local crate must set
-`[lints] workspace = true`. The runner must have `cargo` and `jq` installed.
+Each crate must set `[lints] workspace = true` or define a nonempty lint table,
+such as `[lints.rust]` or `[lints.clippy]`. Empty or missing lint tables fail.
+The runner must have Rust 1.85 or newer with Cargo installed. Cargo builds the
+checker on first use.
 
 Set `working-directory` when the workspace is in a subdirectory. See the
-[action documentation](check-workspace-lints-inherited/README.md) for an example.
+[action documentation](check-workspace-lints/README.md) for examples.
 
 The `result` output is `success` when the check passes and `failure` when it fails.
 A failed check fails the action.
