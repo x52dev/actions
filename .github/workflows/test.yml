@@ -11,6 +11,83 @@ permissions:
   contents: read
 
 jobs:
+  check-workspace-lints:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - workspace: pass
+            expected-result: success
+          - workspace: fail
+            expected-result: failure
+          - workspace: pass
+            expected-result: failure
+            invalid-manifest: true
+          - workspace: fail
+            expected-result: failure
+            empty-lints: true
+            accept-lint-overrides: "true"
+          - workspace: pass
+            expected-result: failure
+            local-lints: true
+            accept-lint-overrides: "false"
+          - workspace: pass
+            expected-result: success
+            local-lints: true
+            accept-lint-overrides: "true"
+          - workspace: pass
+            expected-result: success
+            accept-lint-overrides: "true"
+          - workspace: fail
+            expected-result: failure
+            accept-lint-overrides: "true"
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Make member manifest invalid
+        if: matrix.invalid-manifest == true
+        working-directory: check-workspace-lints/tests/${{ matrix.workspace }}
+        run: printf '\ninvalid TOML\n' >> member/Cargo.toml
+
+      - name: Add empty member lint table
+        if: matrix.empty-lints == true
+        working-directory: check-workspace-lints/tests/${{ matrix.workspace }}
+        run: printf '\n[lints.rust]\n' >> member/Cargo.toml
+
+      - name: Configure local member lints
+        if: matrix.local-lints == true
+        working-directory: check-workspace-lints/tests/${{ matrix.workspace }}
+        run: |
+          cat > member/Cargo.toml <<'TOML'
+          [package]
+          name = "workspace-lints-pass-member"
+          version = "0.0.0"
+          edition = "2021"
+
+          [lints.rust]
+          unsafe_code = "allow"
+          TOML
+
+      - uses: $/check-workspace-lints
+        id: check
+        continue-on-error: ${{ matrix.expected-result == 'failure' }}
+        with:
+          working-directory: check-workspace-lints/tests/${{ matrix.workspace }}
+          accept-lint-overrides: ${{ matrix.accept-lint-overrides || 'false' }}
+
+      - name: Check result
+        env:
+          EXPECTED_RESULT: ${{ matrix.expected-result }}
+          ACTUAL_OUTCOME: ${{ steps.check.outcome }}
+          ACTUAL_RESULT: ${{ steps.check.outputs.result }}
+        run: |
+          test "$ACTUAL_OUTCOME" = "$EXPECTED_RESULT"
+          test "$ACTUAL_RESULT" = "$EXPECTED_RESULT"
+
   cargo-workspace-check-external-types:
     runs-on: ubuntu-latest
     steps:

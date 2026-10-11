@@ -1,0 +1,4 @@
+[package]
+name = "workspace-lints-fail-member"
+version = "0.0.0"
+edition = "2021"

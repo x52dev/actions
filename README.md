@@ -2,6 +2,30 @@
 
 Reusable GitHub Actions for x52 projects.
 
+## `check-workspace-lints`
+
+The `check-workspace-lints` action checks that each local crate inherits workspace
+lints:
+
+```yaml
+- uses: x52dev/actions/check-workspace-lints@main
+```
+
+Each crate must set `[lints] workspace = true`. Set `accept-lint-overrides: true`
+to also accept nonempty local lint tables, such as `[lints.rust]` or
+`[lints.clippy]`. This input defaults to `false`. Empty or missing lint tables
+fail in both modes.
+
+The runner must have Cargo and Python 3.11 or later installed. The action uses
+Python's standard-library TOML parser. It has no build or package installation
+step.
+
+Set `working-directory` when the workspace is in a subdirectory. See the
+[action documentation](check-workspace-lints/README.md) for examples.
+
+The `result` output is `success` when the check passes and `failure` when it fails.
+A failed check fails the action.
+
 ## `cargo-workspace-check-external-types`
 
 The `cargo-workspace-check-external-types` action installs the pinned Rust nightly toolchain and
