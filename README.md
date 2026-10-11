@@ -15,8 +15,10 @@ Each crate must set `[lints] workspace = true`. Set `accept-lint-overrides: true
 to also accept nonempty local lint tables, such as `[lints.rust]` or
 `[lints.clippy]`. This input defaults to `false`. Empty or missing lint tables
 fail in both modes.
-The runner must have Rust 1.85 or newer with Cargo installed. Cargo builds the
-checker on first use.
+
+The runner must have Cargo and Python 3.11 or later installed. The action uses
+Python's standard-library TOML parser. It has no build or package installation
+step.
 
 Set `working-directory` when the workspace is in a subdirectory. See the
 [action documentation](check-workspace-lints/README.md) for examples.

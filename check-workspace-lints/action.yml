@@ -26,4 +26,4 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       env:
         ACCEPT_LINT_OVERRIDES: ${{ inputs.accept-lint-overrides }}
-      run: cargo run --quiet --locked --manifest-path "${GITHUB_ACTION_PATH}/Cargo.toml" -- "$PWD/Cargo.toml" "$ACCEPT_LINT_OVERRIDES"
+      run: python3 "${GITHUB_ACTION_PATH}/check.py" "$PWD/Cargo.toml" "$ACCEPT_LINT_OVERRIDES"

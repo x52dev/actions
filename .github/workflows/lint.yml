@@ -23,14 +23,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Check formatting
-        run: cargo fmt --all --check
-
-      - name: Check Rust code
-        run: cargo clippy --all-targets --locked -- -D warnings
-
       - name: Test lint configurations
-        run: cargo test --locked
+        run: python3 tests/test_configuration.py
 
   zizmor:
     name: GitHub Actions Security

@@ -24,9 +24,9 @@ For example, a crate can define its own lint set when overrides are enabled:
 unsafe_code = "forbid"
 ```
 
-Empty or missing lint tables fail in both modes. The check accepts all TOML forms
-that Cargo accepts, including inline tables, dotted keys, quoted keys, and
-comments.
+Empty or missing lint tables fail in both modes. The check uses Python's
+standard-library `tomllib` parser, which supports inline tables, dotted keys,
+quoted keys, and comments.
 
 Cargo does not let a crate combine workspace lint inheritance with local lint
 overrides. A crate that needs different lints must define its full local lint
@@ -35,10 +35,9 @@ exists; it does not compare local lints with workspace lints. The workspace root
 needs `[workspace.lints]` only when a crate inherits it. Virtual workspaces are
 supported.
 
-The runner must have Rust 1.85 or newer with Cargo installed. Cargo builds the
-Rust checker on first use and reuses the build on later calls. The checker's
-dependencies are locked. The first build needs registry access unless those
-dependencies are cached.
+The runner must have Cargo and Python 3.11 or later installed. The action runs
+one Python script with standard-library modules. There is no build or package
+installation step.
 
 The checker uses `cargo metadata --frozen --no-deps` to list local crates and
 validate the workspace. Cargo metadata errors fail the check.
@@ -69,3 +68,5 @@ after a failure:
     RESULT: ${{ steps.lints.outputs.result }}
   run: echo "$RESULT"
 ```
+
+Run `python3 tests/test_configuration.py` in this directory to test the checker.
