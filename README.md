@@ -32,7 +32,7 @@ The `cargo-workspace-check-external-types` action installs the pinned Rust night
 `cargo-check-external-types`, then checks all library crates in the workspace:
 
 ```yaml
-- uses: x52dev/actions/cargo-workspace-check-external-types@master
+- uses: x52dev/actions/cargo-workspace-check-external-types@main
 ```
 
 Set `all-features: true` when the workspace check must enable every crate
